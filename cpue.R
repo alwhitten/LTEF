@@ -49,58 +49,45 @@ headtail(fish, n=2)
 site <-site %>% mutate(EF_EFFORT=EF_EFFORT/60)
 headtail(site)
 
-#---lower & upper river---#
-fish_ur <- fish %>% filter(REACH %in% c("I03","I04","I05"))
-headtail(fish_ur)
-
-fish_lr <- fish %>% filter(REACH %in% c("I06","I07","I08"))
-headtail(fish_lr)
-
-#---MCB-U & SCB---#
-# Upper River MCB & SCB
-fish_ur_m <- fish_ur %>% filter(STRATUM=="MCB-U")
+#---lower/upper river & MCB-U/SCB & Species needed---#
+# Upper River
+fish_ur_m <- fish %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="MCB-U") %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
 headtail(fish_ur_m)
-fish_ur_s <- fish_ur %>% filter(STRATUM=="SCB")
 
-# Lower River MCB & SCB
-fish_lr_m <- fish_lr %>% filter(STRATUM=="MCB-U")
-fish_lr_s <- fish_lr %>% filter(STRATUM=="SCB")
+fish_ur_s <- fish %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="SCB") %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
 
+# Lower River
+fish_lr_m <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="MCB-U") %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
 
-#---Select Species for Report---#
-# Upper River Species for MCB-U & SCB
-fish_ur_m <- fish_ur_m %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
-fish_ur_s <- fish_ur_s %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
-
-# Lower River Species for MCB-U & SCB
-fish_lr_m <- fish_lr_m %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
-fish_lr_s <- fish_lr_s %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
+fish_lr_s <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="SCB") %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
 
 
 #---catch---#
 # Upper River MCB-U & SCB
-catch_ur_m <- fish_ur_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER), .groups = "keep") %>% as.data.frame
-
-catch_ur_s <- fish_ur_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
+catch_ur_m <- fish_ur_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
+catch_ur_s <- fish_ur_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
 
 # Lower River MCB-U & SCB
-catch_lr_m <- fish_lr_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
-catch_lr_s <- fish_lr_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
+catch_lr_m <- fish_lr_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
+catch_lr_s <- fish_lr_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
 
 #---Check for Zeros---#
 # check if all data is there with location codes and species. Page 47 Ogle 2016
 
 #---Join Catch and EFFort---#
-catch_ur_m <-left_join(site,catch_ur_m, by= "LOCATION_CODE")
+j_catch_ur_m <-left_join(site,catch_ur_m, by= "LOCATION_CODE", "SPECIES") 
 head(catch_ur_m)
-catch_ur_m <- catch_ur_m[complete.cases(catch_ur_m), ]
-catch_ur_m <- catch_ur_m %>% group_by(SPECIES) %>% summarize(caught=sum(caught), .groups = "keep") %>% as.data.frame
+#j_catch_ur_m <- catch_ur_m[complete.cases(catch_ur_m), ]
 
-##########STOPED HERE############# HAVE CPUE by Site need by upper and lower river
+
+#---Add Zeros---#
+j_catch_ur_m <- j_catch_ur_m %>% addZeroCatch("LOCATION_CODE", "SPECIES", zerovar="caught") %>% arrange(LOCATION_CODE,SPECIES, EF_EFFORT)
+
+##########STOPED HERE############# HAVE CPUE by Site need by upper and lower river Need to make "site" data frame for of the four groups upper/lower/mcb/scb and add into section on join catch and effort. Otherwise I have way too many sites with zero effort for the wrong places
 
 #---CPUE---#
 # Catch of each species per hour for upper and lower river MCB-U and SCB
-catch_ur_m <-catch_ur_m %>% mutate(cpue=caught/EF_EFFORT)
+j_catch_ur_m <-j_catch_ur_m %>% mutate(cpue=caught/EF_EFFORT)
 headtail(catch_ur_m)
 catch_ur_s %>% mutate(cpue=caught/EF_EFFORT)
 catch_lr_m %>% mutate(cpue=caught/EF_EFFORT)
