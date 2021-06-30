@@ -24,6 +24,7 @@ library(multcomp)
 #---Directory---#
 getwd()
 setwd ("//server/users/awhitten/Documents/LTEF/Annual_Report_LTEF") 
+
 # Read in data
 fish<- read.csv("filename.csv")
 
@@ -46,6 +47,7 @@ headtail(fish, n=2)
 #Ws equation total length (tl) millimeters and weight in grams
 # log10Ws=-5.15756 + 3.06842(log10tl) Lamer 2015
 #Lamer, J. T. (2015). Bighead and silver carp hybridization in the Mississippi River Basin: Prevalence, distribution, and post-zygotic selection. Doctoral dissertation. Champaign, IL: University of Illinois at Urbana-Champaign.
+
 wsSCP<-c(int=-5.15756, slope=3.06842) # sliver carp intercept and slope
 
 

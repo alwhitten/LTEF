@@ -22,34 +22,102 @@ library(tidyr)
 
 #---Directory---#
 getwd()
-setwd ("//server/users/awhitten/Documents/LTEF/Annual_Report_LTEF")
+setwd ("C:/Users/Kris/Documents/LTEF/Annual_Report_LTEF/LTEF")
 
 # Read in data
-fish<- read.csv("filename.csv")
+site<-read.csv("2020Sampling.csv")
+headtail(site, n=2)
+fish<- read.csv("LTEF2020_Report_Code.csv")
+headtail(fish, n=2)
+
+# select columns of data for CPUE
+fish <- fish %>% select(YEAR,LOCATION_CODE,REACH,STRATUM,SPECIES, NUMBER) 
+head(fish, n=2)
 
 #---Remove batched fish---# 
 #multiplying rows by the count column
 fish<-fish[rep(row.names(fish), fish$NUMBER),1:6]#rep is the function, new.data is data name, NUMBER is the column I want to multiply by, and 6 is my number of data columns
 ###NOTE above code means each row is a fish. Since this duplicates rows, the count column should all be ones. 
-#---lower or upper river---#
-# choose one
-fish <- fish$REACH==c(I03,I04,I05)
-fish <- fish$REACH==c(I06,I07,I08)
+
+#---Edit NUMBER Column---#
+# b/c changed every row to one fish and use the NUMBER column later set it to 1
+fish$NUMBER <-1
+headtail(fish, n=2)
 
 #---Effort---#
 # Convert effort to per hour
-fish <-fish %>% mutate(EF_EFFORT=EF_EFFORT/60)
+site <-site %>% mutate(EF_EFFORT=EF_EFFORT/60)
+headtail(site)
+
+#---lower & upper river---#
+fish_ur <- fish %>% filter(REACH %in% c("I03","I04","I05"))
+headtail(fish_ur)
+
+fish_lr <- fish %>% filter(REACH %in% c("I06","I07","I08"))
+headtail(fish_lr)
+
+#---MCB-U & SCB---#
+# Upper River MCB & SCB
+fish_ur_m <- fish_ur %>% filter(STRATUM=="MCB-U")
+headtail(fish_ur_m)
+fish_ur_s <- fish_ur %>% filter(STRATUM=="SCB")
+
+# Lower River MCB & SCB
+fish_lr_m <- fish_lr %>% filter(STRATUM=="MCB-U")
+fish_lr_s <- fish_lr %>% filter(STRATUM=="SCB")
+
+
+#---Select Species for Report---#
+# Upper River Species for MCB-U & SCB
+fish_ur_m <- fish_ur_m %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
+fish_ur_s <- fish_ur_s %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB"))
+
+# Lower River Species for MCB-U & SCB
+fish_lr_m <- fish_lr_m %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
+fish_lr_s <- fish_lr_s %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP"))
+
 
 #---catch---#
-catch <- fish %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
+# Upper River MCB-U & SCB
+catch_ur_m <- fish_ur_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER), .groups = "keep") %>% as.data.frame
+
+catch_ur_s <- fish_ur_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
+
+# Lower River MCB-U & SCB
+catch_lr_m <- fish_lr_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
+catch_lr_s <- fish_lr_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER)) %>% as.data.frame
 
 #---Check for Zeros---#
 # check if all data is there with location codes and species. Page 47 Ogle 2016
 
+#---Join Catch and EFFort---#
+catch_ur_m <-left_join(site,catch_ur_m, by= "LOCATION_CODE")
+head(catch_ur_m)
+catch_ur_m <- catch_ur_m[complete.cases(catch_ur_m), ]
+catch_ur_m <- catch_ur_m %>% group_by(SPECIES) %>% summarize(caught=sum(caught), .groups = "keep") %>% as.data.frame
+
+##########STOPED HERE############# HAVE CPUE by Site need by upper and lower river
+
 #---CPUE---#
-# Catch of each species per hour
-catch %>% mutate(cpue=caught/EF_EFFORT)
-headtail(catch)
+# Catch of each species per hour for upper and lower river MCB-U and SCB
+catch_ur_m <-catch_ur_m %>% mutate(cpue=caught/EF_EFFORT)
+headtail(catch_ur_m)
+catch_ur_s %>% mutate(cpue=caught/EF_EFFORT)
+catch_lr_m %>% mutate(cpue=caught/EF_EFFORT)
+catch_lr_s %>% mutate(cpue=caught/EF_EFFORT)
+
 
 #---CPUE Summary Stats---#
-cpueSum <- catch %>% group_by(SPECIES) %>% summarize(LOCATION_CODE=n(), fish=sum(caught), mean=mean(cupe), sd=sd(cupe), se=sd/sqrt(LOCATION_CODE), RSE=se/mean*100) %>% as.data.frame()
+# Upper River MCB-U
+cpueSum_ur_m <- catch_ur_m %>% group_by(SPECIES) %>% summarize(LOCATION_CODE=n(), fish=sum(caught), mean=mean(cupe), sd=sd(cupe), se=sd/sqrt(LOCATION_CODE), RSE=se/mean*100) %>% as.data.frame()
+
+# Upper River SCB
+cpueSum_ur_s <- catch_ur_s %>% group_by(SPECIES) %>% summarize(LOCATION_CODE=n(), fish=sum(caught), mean=mean(cupe), sd=sd(cupe), se=sd/sqrt(LOCATION_CODE), RSE=se/mean*100) %>% as.data.frame()
+
+# Lower River MCB-U
+cpueSum_lr_m <- catch_lr_m %>% group_by(SPECIES) %>% summarize(LOCATION_CODE=n(), fish=sum(caught), mean=mean(cupe), sd=sd(cupe), se=sd/sqrt(LOCATION_CODE), RSE=se/mean*100) %>% as.data.frame()
+
+# Lower River SCB
+cpueSum_lr_s <- catch_lr_s %>% group_by(SPECIES) %>% summarize(LOCATION_CODE=n(), fish=sum(caught), mean=mean(cupe), sd=sd(cupe), se=sd/sqrt(LOCATION_CODE), RSE=se/mean*100) %>% as.data.frame()
+
+#---CPUE Graphs---#
