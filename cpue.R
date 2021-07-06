@@ -22,6 +22,7 @@ library(tidyr)
 #---Directory---#
 getwd()
 setwd ("C:/Users/Kris/Documents/LTEF/Annual_Report_LTEF/LTEF")
+setwd("\\\\server/users/awhitten/Documents/LTEF/Annual_Report_LTEF/LTEF")
 
 # Read in data
 # Used separate fish and site data to calculate catch and effort 
@@ -96,11 +97,11 @@ catch_lr_s <- fish_lr_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught
 catch_ur_m <-left_join(site_ur_m,catch_ur_m, by= "LOCATION_CODE", "SPECIES")
 head(catch_ur_m)
 
-catch_ur_s <-left_join(site_ur_s,catch_ur_m, by= "LOCATION_CODE", "SPECIES")
+catch_ur_s <-left_join(site_ur_s,catch_ur_s, by= "LOCATION_CODE", "SPECIES")
 
-catch_lr_m <-left_join(site_lr_m,catch_ur_m, by= "LOCATION_CODE", "SPECIES")
+catch_lr_m <-left_join(site_lr_m,catch_lr_m, by= "LOCATION_CODE", "SPECIES")
 
-catch_lr_s <-left_join(site_lr_s,catch_ur_m, by= "LOCATION_CODE", "SPECIES")
+catch_lr_s <-left_join(site_lr_s,catch_lr_s, by= "LOCATION_CODE", "SPECIES")
 ##################################################
 
 #---Add Zeros---#
@@ -117,7 +118,7 @@ catch_lr_s <- catch_lr_s %>% addZeroCatch("LOCATION_CODE", "SPECIES", zerovar="c
 #---CPUE---#
 # Catch of each species per hour for upper and lower river MCB-U and SCB
 catch_ur_m <- catch_ur_m %>% mutate(cpue=caught/EF_EFFORT)
-headtail(catch_ur_m)
+headtail(catch_ur_m, n=2)
 catch_ur_s <- catch_ur_s %>% mutate(cpue=caught/EF_EFFORT)
 catch_lr_m <- catch_lr_m %>% mutate(cpue=caught/EF_EFFORT)
 catch_lr_m <- catch_lr_s %>% mutate(cpue=caught/EF_EFFORT)
