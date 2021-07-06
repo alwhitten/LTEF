@@ -21,7 +21,7 @@ library(tidyr)
 
 #---Directory---#
 getwd()
-setwd ("C:/Users/Kris/Documents/LTEF/Annual_Report_LTEF/LTEF")
+#setwd ("C:/Users/Kris/Documents/LTEF/Annual_Report_LTEF/LTEF")
 setwd("\\\\server/users/awhitten/Documents/LTEF/Annual_Report_LTEF/LTEF")
 
 # Read in data
@@ -58,12 +58,13 @@ headtail(site)
 site_ur_m <- site %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="MCB-U") %>% mutate(river="upper river")
 headtail(site_ur_m)
 # Upper Illinois River SCB Sites
-site_ur_s <- fish %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="SCB") %>% mutate(river="upper river")
+site_ur_s <- site %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="SCB") %>% mutate(river="upper river")
+headtail(site_ur_s)
 
 # Lower Illinois River MCB Sites
-site_lr_m <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="MCB-U") %>% mutate(river="lower river")
+site_lr_m <- site %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="MCB-U") %>% mutate(river="lower river")
 # Lower Illinois River SCB Species
-site_lr_s <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="SCB") %>% mutate(river="lower river")
+site_lr_s <- site %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="SCB") %>% mutate(river="lower river")
 ###############################################
 
 #---Fish Data lower/upper river & MCB-U/SCB & Species needed---#
@@ -72,8 +73,10 @@ site_lr_s <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM
 # Upper Illinois River MCB Species
 fish_ur_m <- fish %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="MCB-U") %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB")) %>% mutate(river="upper river")
 headtail(fish_ur_m)
+
 # Upper Illinois River SCB Species
 fish_ur_s <- fish %>% filter(REACH %in% c("I03","I04","I05")) %>% filter(STRATUM=="SCB") %>% filter(SPECIES %in% c("BLG","CCF", "LMB", "SMB")) %>% mutate(river="upper river")
+headtail(fish_ur_s, n= 2)
 
 # Lower Illinois River MCB Species
 fish_lr_m <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM=="MCB-U") %>% filter(SPECIES %in% c("WHC", "BLC","BLG","CCF", "LMB", "WHB", "SCP")) %>% mutate(river="lower river")
@@ -84,8 +87,10 @@ fish_lr_s <- fish %>% filter(REACH %in% c("I06","I07","I08")) %>% filter(STRATUM
 #---catch---#
 # Upper River MCB-U & SCB
 catch_ur_m <- fish_ur_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
+headtail(catch_ur_m, n=2)
 
 catch_ur_s <- fish_ur_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
+headtail(catch_ur_s, n=2)
 
 # Lower River MCB-U & SCB
 catch_lr_m <- fish_lr_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
@@ -93,11 +98,13 @@ catch_lr_m <- fish_lr_m %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught
 catch_lr_s <- fish_lr_s %>% group_by(LOCATION_CODE,SPECIES) %>% summarize(caught=sum(NUMBER),.groups = "keep") %>% as.data.frame
 ###############################################
 
+
 #---Join Catch and EFFort---#
 catch_ur_m <-left_join(site_ur_m,catch_ur_m, by= "LOCATION_CODE", "SPECIES")
 head(catch_ur_m)
 
 catch_ur_s <-left_join(site_ur_s,catch_ur_s, by= "LOCATION_CODE", "SPECIES")
+headtail(catch_ur_s, n =2)
 
 catch_lr_m <-left_join(site_lr_m,catch_lr_m, by= "LOCATION_CODE", "SPECIES")
 
@@ -121,13 +128,13 @@ catch_ur_m <- catch_ur_m %>% mutate(cpue=caught/EF_EFFORT)
 headtail(catch_ur_m, n=2)
 catch_ur_s <- catch_ur_s %>% mutate(cpue=caught/EF_EFFORT)
 catch_lr_m <- catch_lr_m %>% mutate(cpue=caught/EF_EFFORT)
-catch_lr_m <- catch_lr_s %>% mutate(cpue=caught/EF_EFFORT)
+catch_lr_s <- catch_lr_s %>% mutate(cpue=caught/EF_EFFORT)
 ##############################################
 
 #---CPUE Summary Stats---#
 # Upper River MCB-U
 cpueSum_ur_m <- catch_ur_m %>% group_by(SPECIES) %>% summarize(sites=n(), fish=sum(caught), mean=mean(cpue), sd=sd(cpue), se=sd/sqrt(sites), RSE=se/mean*100) %>% as.data.frame()
-
+cpueSum_ur_m
 # Upper River SCB
 cpueSum_ur_s <- catch_ur_s %>% group_by(SPECIES) %>% summarize(sites=n(), fish=sum(caught), mean=mean(cpue), sd=sd(cpue), se=sd/sqrt(sites), RSE=se/mean*100) %>% as.data.frame()
 
